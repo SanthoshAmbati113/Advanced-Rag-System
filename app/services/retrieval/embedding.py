@@ -1,5 +1,4 @@
 import time
-import logfire
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from app.config import settings
 
@@ -21,16 +20,16 @@ def _probe_gemini():
             google_api_key=settings.GEMINI_API_KEY,
         )
         model.embed_query("probe")
-        logfire.info("Gemini embeddings ready (gemini-embedding-2-preview, 3072-dim).")
+        print("Gemini embeddings ready (gemini-embedding-2-preview, 3072-dim).")
         return model
     except Exception as e:
-        logfire.warning(f"Gemini probe failed: {e}. Will use sentence-transformers fallback.")
+        print(f"Gemini probe failed: {e}. Will use sentence-transformers fallback.")
         return None
 
 
 def _load_fallback():
     from sentence_transformers import SentenceTransformer
-    logfire.info("Loading sentence-transformers fallback (all-mpnet-base-v2, 768-dim).")
+    print("Loading sentence-transformers fallback (all-mpnet-base-v2, 768-dim).")
     return SentenceTransformer("all-mpnet-base-v2")
 
 
@@ -70,13 +69,10 @@ def _embed_batch(batch: list[str]) -> list[list[float]]:
                 is_rate_limit = any(x in err for x in ("429", "rate", "quota", "resource_exhausted"))
                 if is_rate_limit and attempt < 3:
                     wait = 2 ** attempt
-                    logfire.warning(
-                        f"Gemini rate limit hit — retrying in {wait}s "
-                        f"(attempt {attempt + 1}/4)."
-                    )
+                    print(f"Gemini rate limit hit — retrying in {wait}s (attempt {attempt + 1}/4).")
                     time.sleep(wait)
                 else:
-                    logfire.error(f"Gemini embedding failed: {e}")
+                    print(f"Gemini embedding failed: {e}")
                     raise
         raise RuntimeError("Gemini rate limit persisted after 4 attempts.")
     else:
@@ -97,6 +93,5 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     all_embeddings: list[list[float]] = []
     for i in range(0, len(texts), BATCH_SIZE):
         batch = texts[i : i + BATCH_SIZE]
-        with logfire.span("Embed batch", model=_model_type, start=i, size=len(batch)):
-            all_embeddings.extend(_embed_batch(batch))
+        all_embeddings.extend(_embed_batch(batch))
     return all_embeddings

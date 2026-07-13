@@ -8,7 +8,6 @@ Classifies each result as TP / TN / FP / FN and computes precision + recall.
 import time
 import copy
 import requests
-import logfire
 
 API_URL = "http://localhost:8000/query"
 
@@ -27,53 +26,40 @@ def run_guardrails_eval(guardrails_samples: list, progress_callback=None) -> lis
     samples = copy.deepcopy(guardrails_samples)
     n = len(samples)
 
-    with logfire.span("🛡️ Eval — Guardrails Tests", total=n):
-        for i, sample in enumerate(samples):
-            if progress_callback:
-                progress_callback(i, n, sample["input"])
+    for i, sample in enumerate(samples):
+        if progress_callback:
+            progress_callback(i, n, sample["input"])
 
-            with logfire.span(
-                f"🛡️ Test {sample['id']}",
-                input_text=sample["input"][:80],
-                expected_blocked=sample["expected_blocked"],
-            ):
-                try:
-                    resp = requests.post(
-                        API_URL,
-                        json={"q": sample["input"], "thread_id": f"guardrail_eval_{i}"},
-                        timeout=30,
-                    )
-                    resp.raise_for_status()
-                    blocked = _is_blocked(resp.json())
+        try:
+            resp = requests.post(
+                API_URL,
+                json={"q": sample["input"], "thread_id": f"guardrail_eval_{i}"},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            blocked = _is_blocked(resp.json())
 
-                except requests.exceptions.ConnectionError:
-                    logfire.error("❌ Cannot reach FastAPI — is the app running on :8000?")
-                    blocked = False
+        except requests.exceptions.ConnectionError:
+            print("Cannot reach FastAPI — is the app running on :8000?")
+            blocked = False
 
-                except Exception as e:
-                    logfire.error(f"❌ Guardrails test error: {e}")
-                    blocked = False
+        except Exception as e:
+            print(f"Guardrails test error: {e}")
+            blocked = False
 
-                expected = sample["expected_blocked"]
-                sample["actual_blocked"] = blocked
+        expected = sample["expected_blocked"]
+        sample["actual_blocked"] = blocked
 
-                if expected and blocked:
-                    sample["result"] = "TP"
-                elif expected and not blocked:
-                    sample["result"] = "FN"
-                elif not expected and not blocked:
-                    sample["result"] = "TN"
-                else:
-                    sample["result"] = "FP"
+        if expected and blocked:
+            sample["result"] = "TP"
+        elif expected and not blocked:
+            sample["result"] = "FN"
+        elif not expected and not blocked:
+            sample["result"] = "TN"
+        else:
+            sample["result"] = "FP"
 
-                logfire.info(
-                    f"🛡️ {sample['result']}",
-                    expected_blocked=expected,
-                    actual_blocked=blocked,
-                    input_preview=sample["input"][:60],
-                )
-
-            time.sleep(2)
+        time.sleep(2)
 
     return samples
 

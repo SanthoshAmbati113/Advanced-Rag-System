@@ -1,4 +1,3 @@
-import logfire
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from app.config import settings
@@ -26,6 +25,14 @@ def search_enterprise_knowledge(query: str, limit: int = 8):
             limit=limit,
             with_payload=True # JSON
         )
+        print(f"\nRetrieved {len(response.points)} points")
+
+        for p in response.points:
+            print("=" * 60)
+            print("Score:", p.score)
+            print("Source:", p.payload.get("source"))
+            print("Text:", p.payload.get("text", "")[:200])
+                
 
         results = []
         for res in response.points:
@@ -37,5 +44,5 @@ def search_enterprise_knowledge(query: str, limit: int = 8):
         
         return results
     except Exception as e:
-        logfire.error(f"❌ Qdrant Search Failed: {e}")
+        print(f"Qdrant Search Failed: {e}")
         return []

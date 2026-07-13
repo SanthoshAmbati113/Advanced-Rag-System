@@ -9,7 +9,6 @@ Contexts are truncated to 300 chars (2 chunks max) so no single request exceeds 
 
 import os
 import asyncio
-import logfire
 import pandas as pd
 from openai import AsyncOpenAI
 
@@ -108,121 +107,113 @@ async def run_all_metrics(golden_dataset: dict, status_cb=None) -> dict:
 
     results = {}
 
-    with logfire.span("🧪 Eval Phase 2 — All Metrics", total_samples=len(samples)):
+    # ── Exp 1: Faithfulness ───────────────────────────────────────────────
+    if status_cb:
+        status_cb(f"🧪 Exp 1/6 — Faithfulness ({len(samples)} samples)...")
+    inputs = [
+        {
+            "user_input": s["question"],
+            "response": s["actual_response"],
+            "retrieved_contexts": s["actual_contexts"],
+        }
+        for s in samples
+    ]
+    scores = await _batched_score(Faithfulness(llm=judge_llm), inputs, samples, status_cb, "Faithfulness")
+    df = _score_df("faithfulness", samples, scores)
+    results["faithfulness"] = df
+    print(f"Faithfulness done, avg: {round(df['faithfulness'].mean(), 3)}")
 
-        # ── Exp 1: Faithfulness ───────────────────────────────────────────────
-        if status_cb:
-            status_cb(f"🧪 Exp 1/6 — Faithfulness ({len(samples)} samples)...")
-        with logfire.span("🧪 Exp 1 — Faithfulness"):
-            inputs = [
-                {
-                    "user_input": s["question"],
-                    "response": s["actual_response"],
-                    "retrieved_contexts": s["actual_contexts"],
-                }
-                for s in samples
-            ]
-            scores = await _batched_score(Faithfulness(llm=judge_llm), inputs, samples, status_cb, "Faithfulness")
-            df = _score_df("faithfulness", samples, scores)
-            results["faithfulness"] = df
-            logfire.info("🧪 Faithfulness done", avg=round(df["faithfulness"].mean(), 3))
+    await _cooldown(COOLDOWN_STANDARD, "Faithfulness", status_cb)
 
-        await _cooldown(COOLDOWN_STANDARD, "Faithfulness", status_cb)
+    # ── Exp 2: Answer Relevancy ───────────────────────────────────────────
+    if status_cb:
+        status_cb(f"🧪 Exp 2/6 — Answer Relevancy ({len(samples)} samples)...")
+    inputs = [
+        {"user_input": s["question"], "response": s["actual_response"]}
+        for s in samples
+    ]
+    scores = await _batched_score(
+        AnswerRelevancy(llm=judge_llm, embeddings=ragas_embeddings),
+        inputs, samples, status_cb, "Answer Relevancy"
+    )
+    df = _score_df("answer_relevancy", samples, scores)
+    results["answer_relevancy"] = df
+    print(f"Answer Relevancy done, avg: {round(df['answer_relevancy'].mean(), 3)}")
 
-        # ── Exp 2: Answer Relevancy ───────────────────────────────────────────
-        if status_cb:
-            status_cb(f"🧪 Exp 2/6 — Answer Relevancy ({len(samples)} samples)...")
-        with logfire.span("🧪 Exp 2 — Answer Relevancy"):
-            inputs = [
-                {"user_input": s["question"], "response": s["actual_response"]}
-                for s in samples
-            ]
-            scores = await _batched_score(
-                AnswerRelevancy(llm=judge_llm, embeddings=ragas_embeddings),
-                inputs, samples, status_cb, "Answer Relevancy"
-            )
-            df = _score_df("answer_relevancy", samples, scores)
-            results["answer_relevancy"] = df
-            logfire.info("🧪 Answer Relevancy done", avg=round(df["answer_relevancy"].mean(), 3))
+    await _cooldown(COOLDOWN_STANDARD, "Answer Relevancy", status_cb)
 
-        await _cooldown(COOLDOWN_STANDARD, "Answer Relevancy", status_cb)
+    # ── Exp 3: Context Precision ──────────────────────────────────────────
+    if status_cb:
+        status_cb(f"🧪 Exp 3/6 — Context Precision ({len(samples)} samples)...")
+    inputs = [
+        {
+            "user_input": s["question"],
+            "reference": s["reference"],
+            "retrieved_contexts": s["actual_contexts"],
+        }
+        for s in samples
+    ]
+    scores = await _batched_score(ContextPrecision(llm=judge_llm), inputs, samples, status_cb, "Context Precision")
+    df = _score_df("context_precision", samples, scores)
+    results["context_precision"] = df
+    print(f"Context Precision done, avg: {round(df['context_precision'].mean(), 3)}")
 
-        # ── Exp 3: Context Precision ──────────────────────────────────────────
-        if status_cb:
-            status_cb(f"🧪 Exp 3/6 — Context Precision ({len(samples)} samples)...")
-        with logfire.span("🧪 Exp 3 — Context Precision"):
-            inputs = [
-                {
-                    "user_input": s["question"],
-                    "reference": s["reference"],
-                    "retrieved_contexts": s["actual_contexts"],
-                }
-                for s in samples
-            ]
-            scores = await _batched_score(ContextPrecision(llm=judge_llm), inputs, samples, status_cb, "Context Precision")
-            df = _score_df("context_precision", samples, scores)
-            results["context_precision"] = df
-            logfire.info("🧪 Context Precision done", avg=round(df["context_precision"].mean(), 3))
+    await _cooldown(COOLDOWN_STANDARD, "Context Precision", status_cb)
 
-        await _cooldown(COOLDOWN_STANDARD, "Context Precision", status_cb)
+    # ── Exp 4: Context Recall ─────────────────────────────────────────────
+    if status_cb:
+        status_cb(f"🧪 Exp 4/6 — Context Recall ({len(samples)} samples)...")
+    inputs = [
+        {
+            "user_input": s["question"],
+            "reference": s["reference"],
+            "retrieved_contexts": s["actual_contexts"],
+        }
+        for s in samples
+    ]
+    scores = await _batched_score(ContextRecall(llm=judge_llm), inputs, samples, status_cb, "Context Recall")
+    df = _score_df("context_recall", samples, scores)
+    results["context_recall"] = df
+    print(f"Context Recall done, avg: {round(df['context_recall'].mean(), 3)}")
 
-        # ── Exp 4: Context Recall ─────────────────────────────────────────────
-        if status_cb:
-            status_cb(f"🧪 Exp 4/6 — Context Recall ({len(samples)} samples)...")
-        with logfire.span("🧪 Exp 4 — Context Recall"):
-            inputs = [
-                {
-                    "user_input": s["question"],
-                    "reference": s["reference"],
-                    "retrieved_contexts": s["actual_contexts"],
-                }
-                for s in samples
-            ]
-            scores = await _batched_score(ContextRecall(llm=judge_llm), inputs, samples, status_cb, "Context Recall")
-            df = _score_df("context_recall", samples, scores)
-            results["context_recall"] = df
-            logfire.info("🧪 Context Recall done", avg=round(df["context_recall"].mean(), 3))
+    await _cooldown(COOLDOWN_STANDARD, "Context Recall", status_cb)
 
-        await _cooldown(COOLDOWN_STANDARD, "Context Recall", status_cb)
+    # ── Exp 5: Answer Correctness (split into batches) ────────────────────
+    if status_cb:
+        status_cb(f"🧪 Exp 5/6 — Answer Correctness batch 1/2...")
+    inputs = [
+        {
+            "user_input": s["question"],
+            "response": s["actual_response"],
+            "reference": s["reference"],
+        }
+        for s in samples
+    ]
+    all_scores = await _batched_score(
+        AnswerCorrectness(llm=judge_llm, embeddings=ragas_embeddings),
+        inputs, samples, status_cb, "Answer Correctness"
+    )
+    df = _score_df("answer_correctness", samples, all_scores)
+    results["answer_correctness"] = df
+    print(f"Answer Correctness done, avg: {round(df['answer_correctness'].mean(), 3)}")
 
-        # ── Exp 5: Answer Correctness (split into batches) ────────────────────
-        if status_cb:
-            status_cb(f"🧪 Exp 5/6 — Answer Correctness batch 1/2...")
-        with logfire.span("🧪 Exp 5 — Answer Correctness"):
-            inputs = [
-                {
-                    "user_input": s["question"],
-                    "response": s["actual_response"],
-                    "reference": s["reference"],
-                }
-                for s in samples
-            ]
-            all_scores = await _batched_score(
-                AnswerCorrectness(llm=judge_llm, embeddings=ragas_embeddings),
-                inputs, samples, status_cb, "Answer Correctness"
-            )
-            df = _score_df("answer_correctness", samples, all_scores)
-            results["answer_correctness"] = df
-            logfire.info("🧪 Answer Correctness done", avg=round(df["answer_correctness"].mean(), 3))
+    await _cooldown(COOLDOWN_STANDARD, "Answer Correctness", status_cb)
 
-        await _cooldown(COOLDOWN_STANDARD, "Answer Correctness", status_cb)
+    # ── Exp 6: Tool Correctness (no LLM — Jaccard) ───────────────────────
+    if status_cb:
+        status_cb("⚡ Exp 6/6 — Tool Correctness (zero LLM calls)...")
+    tool_rows = []
+    for s in samples:
+        called = set(s.get("actual_tools_called") or [])
+        expected = set(s.get("expected_tools") or [])
+        union = len(called | expected)
+        score = len(called & expected) / union if union > 0 else 0.0
+        tool_rows.append({"question": s["question"][:65], "tool_correctness": round(score, 3)})
+    df = pd.DataFrame(tool_rows)
+    results["tool_correctness"] = df
+    print(f"Tool Correctness done, avg: {round(df['tool_correctness'].mean(), 3)}")
 
-        # ── Exp 6: Tool Correctness (no LLM — Jaccard) ───────────────────────
-        if status_cb:
-            status_cb("⚡ Exp 6/6 — Tool Correctness (zero LLM calls)...")
-        with logfire.span("🧪 Exp 6 — Tool Correctness"):
-            tool_rows = []
-            for s in samples:
-                called = set(s.get("actual_tools_called") or [])
-                expected = set(s.get("expected_tools") or [])
-                union = len(called | expected)
-                score = len(called & expected) / union if union > 0 else 0.0
-                tool_rows.append({"question": s["question"][:65], "tool_correctness": round(score, 3)})
-            df = pd.DataFrame(tool_rows)
-            results["tool_correctness"] = df
-            logfire.info("🧪 Tool Correctness done", avg=round(df["tool_correctness"].mean(), 3))
-
-        if status_cb:
-            status_cb("✅ All 6 experiments complete!")
+    if status_cb:
+        status_cb("✅ All 6 experiments complete!")
 
     return results

@@ -1,4 +1,3 @@
-import logfire
 from langchain_groq import ChatGroq
 from nemoguardrails import RailsConfig, LLMRails
 
@@ -29,7 +28,7 @@ def initialize_rails() -> None:
     )
 
     _rails = LLMRails(config, llm=guard_llm)
-    logfire.info("🛡️ NeMo Guardrails initialised (llama-3.1-8b-instant).")
+    print("NeMo Guardrails initialised (llama-3.1-8b-instant).")
     
     
 
@@ -44,20 +43,19 @@ def guard(message: str) -> tuple[bool, str | None]:
         (False, None)          — message is clean; proceed to LangGraph.
     """
     if _rails is None:
-        logfire.warning("⚠️ Guardrails not initialised — skipping gate.")
+        print("Guardrails not initialised — skipping gate.")
         return False, None
 
-    with logfire.span("🛡️ Guardrails Check"):
-        result = _rails.generate(messages=[{"role": "user", "content": message}])
+    result = _rails.generate(messages=[{"role": "user", "content": message}])
 
-        # NeMo returns {'role': 'assistant', 'content': '...'} — extract text
-        content = result.get("content", "") if isinstance(result, dict) else str(result)
+    # NeMo returns {'role': 'assistant', 'content': '...'} — extract text
+    content = result.get("content", "") if isinstance(result, dict) else str(result)
 
-        fired = any(indicator in content for indicator in RAIL_INDICATORS)
+    fired = any(indicator in content for indicator in RAIL_INDICATORS)
 
-        if fired:
-            logfire.info(f"🛡️ Guardrails fired | query='{message[:80]}'")
-            return True, content
+    if fired:
+        print(f"Guardrails fired | query='{message[:80]}'")
+        return True, content
 
-        logfire.info("✅ Guardrails passed.")
-        return False, None
+    print("Guardrails passed.")
+    return False, None

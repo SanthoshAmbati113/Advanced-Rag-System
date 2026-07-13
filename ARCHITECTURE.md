@@ -1,4 +1,4 @@
-# Enterprise Agentic RAG: LangGraph · Guardrails · LLM Gateway · RAGAS Evals
+# Enterprise Agentic RAG: LangGraph · Guardrails · Direct Groq · RAGAS Evals
 
 ```mermaid
 graph LR
@@ -33,12 +33,10 @@ graph LR
         FR["⚡ FlashRank\nLocal Reranker"]
     end
 
-    %% ── LLM Gateway ──────────────────────────────────────────────────────────
-    subgraph GATEWAY ["🌐  LLM Gateway"]
+    %% ── LLM Integration ──────────────────────────────────────────────────────────
+    subgraph LLM ["🦙  LLM Integration"]
         direction TB
-        PK["🔀 Portkey\nUnified Gateway"]
-        G1["🦙 Groq Primary\nLlama 3.3 · 70B"]
-        G2["🦙 Groq Fallback\nLlama 3.1 · 8B"]
+        G1["🦙 Groq Direct\nLlama 3.3 · 70B"]
     end
 
     %% ── Ingestion ────────────────────────────────────────────────────────────
@@ -52,7 +50,6 @@ graph LR
     %% ── Observability ────────────────────────────────────────────────────────
     subgraph OBS ["📡  Observability"]
         direction LR
-        LF["🔥 Pydantic\nLogfire"]
         LS["🦜 LangSmith\nTracing"]
     end
 
@@ -75,10 +72,8 @@ graph LR
     RT --> QD
     QD --> FR
     FR --> RS
-    RS --> PK
-    PL --> PK
-    PK --> G1
-    PK -.->|fallback| G2
+    RS --> G1
+    PL --> G1
     RS -.-> MEM
     MEM -.-> PL
 
@@ -94,7 +89,7 @@ graph LR
     RAGAS --> JUDGE
 
     %% ── Observability Traces ─────────────────────────────────────────────────
-    API -.->|spans| LF
+    API -.->|spans| LS
     AGENT -.->|traces| LS
 
     %% ── Colors ───────────────────────────────────────────────────────────────
@@ -102,7 +97,7 @@ graph LR
     classDef safety    fill:#EF4444,stroke:#B91C1C,color:#fff,rx:8
     classDef agent     fill:#8B5CF6,stroke:#6D28D9,color:#fff,rx:8
     classDef retrieval fill:#10B981,stroke:#047857,color:#fff,rx:8
-    classDef gateway   fill:#F59E0B,stroke:#B45309,color:#fff,rx:8
+    classDef llm       fill:#F59E0B,stroke:#B45309,color:#fff,rx:8
     classDef ingest    fill:#6366F1,stroke:#4338CA,color:#fff,rx:8
     classDef obs       fill:#14B8A6,stroke:#0F766E,color:#fff,rx:8
     classDef evals     fill:#EC4899,stroke:#BE185D,color:#fff,rx:8
@@ -112,9 +107,9 @@ graph LR
     class API,GR safety
     class PL,RT,RS agent
     class QD,FR retrieval
-    class PK,G1,G2 gateway
+    class G1 llm
     class LOADER,PARSED,EMB ingest
-    class LF,LS obs
+    class LS obs
     class GD,RAGAS,TC,JUDGE evals
     class MEM memory
 ```
@@ -150,9 +145,7 @@ graph TB
         direction LR
         QD[("🗄️ Qdrant Cloud\nVector DB")]
         FR["⚡ FlashRank\nLocal Reranker"]
-        PK["🔀 Portkey Gateway\nRouting + Fallback"]
-        G1["🦙 Groq Primary\nLlama 3.3 · 70B"]
-        G2["🦙 Groq Fallback\nLlama 3.1 · 8B"]
+        G1["🦙 Groq Direct\nLlama 3.3 · 70B"]
     end
 
     subgraph INGEST ["5. Data Ingestion"]
@@ -172,7 +165,6 @@ graph TB
 
     subgraph OBS ["7. Monitoring & Observability"]
         direction LR
-        LF["🔥 Pydantic Logfire\nDistributed Tracing"]
         LS["🦜 LangSmith\nAgent Step Tracing"]
     end
 
@@ -187,10 +179,8 @@ graph TB
     RT --> QD
     QD --> FR
     FR --> RS
-    RS --> PK
-    PL --> PK
-    PK --> G1
-    PK -.->|"fallback"| G2
+    RS --> G1
+    PL --> G1
     RS -.-> MEM
     MEM -.-> PL
 
@@ -205,7 +195,7 @@ graph TB
     RAGAS --> JG
 
     %% ── Observability ────────────────────────────────────────────────────────
-    API -.->|"spans"| LF
+    API -.->|"spans"| LS
     AGENT -.->|"traces"| LS
 
     %% ── Colours ──────────────────────────────────────────────────────────────
@@ -221,10 +211,10 @@ graph TB
     class CHAT,EAPP ui
     class API,GR safety
     class PL,RT,RS agent
-    class QD,FR,PK,G1,G2 knowledge
+    class QD,FR,G1 knowledge
     class LOAD,PROC,EMB ingest
     class GD,RAGAS,TC,JG evals
-    class LF,LS obs
+    class LS obs
     class MEM memory
 ```
 
@@ -238,10 +228,10 @@ graph TB
     B["⚡ 2. FastAPI + 🛡️ NeMo Guardrails"]
     C["🧠 3. LangGraph Agent\nPlanner → Retriever → Responder"]
     D["🗄️ 4. Qdrant Cloud\n+ FlashRank Reranker"]
-    E["🌐 5. Portkey Gateway\nGroq Llama 3.3 70B · Fallback 8B"]
+    E["🦙 5. Groq Direct\nLlama 3.3 70B"]
     F["📥 6. Data Ingestion\nLocal Parsers · Gemini Embeddings · processed_data/"]
     G["🧪 7. RAGAS Evals\nFaithfulness · Precision · Recall · Correctness"]
-    H["📡 8. Monitoring\nLogfire · LangSmith"]
+    H["📡 8. Monitoring\nLangSmith"]
 
     A --> B --> C
     C --> D --> C

@@ -1,16 +1,16 @@
 # Enterprise Agentic RAG (Scalable Pipeline)
 
-A production-grade, enterprise-level RAG system built with **LangGraph**, **Portkey LLM Gateway**, and **Gemini Embeddings**. The system distinguishes between technical "True Data" and random "Noisy Data" using semantic re-ranking, history-aware planning, and NeMo Guardrails for input/output safety.
+A production-grade, enterprise-level RAG system built with **LangGraph**, **Direct Groq Integration**, and **Gemini Embeddings**. The system distinguishes between technical "True Data" and random "Noisy Data" using semantic re-ranking, history-aware planning, and NeMo Guardrails for input/output safety.
 
 ## Key Features
 
 - **Agentic Intelligence**: LangGraph for cyclic reasoning, multi-step planning, and conversation memory.
 - **Guardrails**: NeMo Guardrails gate blocks off-topic, jailbreak, and injection inputs before any retrieval.
-- **LLM Gateway**: Portkey routes all LLM calls with automatic fallback between primary and backup Groq keys.
+- **Direct LLM Integration**: Direct ChatGroq integration for lightning-fast Llama 3.3 models without gateway overhead.
 - **Enterprise Search**: Qdrant Cloud for high-performance vector search + FlashRank for local semantic reranking.
 - **Gemini Embeddings**: Google `gemini-embedding-2-preview` (3072-dim) via `langchain-google-genai`.
 - **Local Document Parsing**: PDF, HTML, TXT, DOCX, PPTX parsed entirely on-device — no external OCR service.
-- **Observability**: Full trace nesting with **Pydantic Logfire** and **LangSmith** across every agent node.
+- **Observability**: Full trace nesting with **LangSmith** across every agent node.
 - **Evaluation Suite**: RAGAS-powered eval pipeline (6 metrics) with a dedicated Streamlit demo app.
 
 ---
@@ -40,7 +40,6 @@ graph TD
 ├── app/
 │   ├── agents/
 │   │   └── nodes/       # Planner, Retriever, Responder LangGraph nodes
-│   ├── gateway/         # Portkey LLM gateway — primary + fallback Groq routing
 │   ├── guardrails/      # NeMo Guardrails input/output filtering
 │   ├── ingestion/
 │   │   ├── chunking/    # Paragraph-based text splitter (1500 char max)
@@ -64,13 +63,13 @@ graph TD
 | Layer | Technology |
 |-------|-----------|
 | Orchestration | LangChain + LangGraph |
-| LLMs | Groq (Llama 3.3 70B) via **Portkey** gateway |
+| LLMs | Groq (Llama 3.3 70B) via direct ChatGroq |
 | Guardrails | NeMo Guardrails |
 | Vector DB | Qdrant Cloud |
 | Reranking | FlashRank (local, zero-latency) |
 | Embeddings | Gemini `gemini-embedding-2-preview` (3072-dim) |
 | Document Parsing | pypdf + pdfplumber (local, no OCR service) |
-| Observability | Pydantic Logfire + LangSmith |
+| Observability | LangSmith |
 | Evaluation | RAGAS + custom Tool Correctness (Jaccard) |
 
 ---
@@ -92,17 +91,12 @@ Create a `.env` file with the following keys:
 ```env
 # Groq Reasoning Engine (Llama 3.3)
 GROQ_API_KEY = ""
-GROQ_FALLBACK_API_KEY = ""          # second Groq key, or same as primary
-
-# Portkey LLM Gateway
-PORTKEY_API_KEY = ""
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # Qdrant Vector DB
 QDRANT_API_KEY = ""
-QDRANT_CLUSTER_ENDPOINT = ""        # e.g. https://your-cluster.cloud.qdrant.io:6333
-
-# Pydantic Logfire Observability
-LOGFIRE_TOKEN = ""
+QDRANT_URL = ""                     # e.g. https://your-cluster.cloud.qdrant.io:6333
+QDRANT_COLLECTION = "rag_collection"
 
 # LangSmith
 LANGSMITH_TRACING = true
@@ -156,14 +150,13 @@ streamlit run evals/app.py
 | 01 | [System Overview](docs/01_SYSTEM_OVERVIEW.md) | High-level vision and end-to-end flow |
 | 02 | [Ingestion Engine](docs/02_INGESTION_ENGINE.md) | Document parsing and indexing pipeline |
 | 03 | [Node Intelligence](docs/03_NODE_INTELLIGENCE.md) | Planner, Retriever, Responder internals |
-| 04 | [Observability](docs/04_TRACING_AND_OBSERVABILITY.md) | Logfire + LangSmith tracing |
+| 04 | [Observability](docs/04_TRACING_AND_OBSERVABILITY.md) | LangSmith tracing |
 | 05 | [Environment Variables](docs/05_ENVIRONMENT_VARIABLES.md) | All env vars and configuration reference |
 | 06 | [Known Gotchas](docs/06_KNOWN_GOTCHAS.md) | Non-obvious bugs and architectural decisions |
 | 07 | [FlashRank Reranking](docs/07_FLASHRANK_RERANKING.md) | Local semantic reranker deep-dive |
 | 08 | [Guardrails](docs/08_GUARDRAILS.md) | NeMo Guardrails implementation |
-| 09 | [LLM Gateway](docs/09_LLM_GATEWAY.md) | Portkey routing, fallback, and observability |
-| 10 | [Evals](docs/10_EVALS.md) | RAGAS metrics theory and token budget |
-| 11 | [Evals Pipeline](docs/11_EVALS_PIPELINE.md) | Live eval pipeline and Streamlit demo |
+| 09 | [Evals](docs/09_EVALS.md) | RAGAS metrics theory and token budget |
+| 10 | [Evals Pipeline](docs/10_EVALS_PIPELINE.md) | Live eval pipeline and Streamlit demo |
 
 ---
 
