@@ -50,7 +50,8 @@ graph LR
     %% ── Observability ────────────────────────────────────────────────────────
     subgraph OBS ["📡  Observability"]
         direction LR
-        LS["🦜 LangSmith\nTracing"]
+        LF["🔥 Logfire\nDistributed Tracing"]
+        LS["🦜 LangSmith\nAgent Step Tracing"]
     end
 
     %% ── Evals ────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ graph LR
     RAGAS --> JUDGE
 
     %% ── Observability Traces ─────────────────────────────────────────────────
-    API -.->|spans| LS
+    API -.->|spans| LF
     AGENT -.->|traces| LS
 
     %% ── Colors ───────────────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ graph LR
     class QD,FR retrieval
     class G1 llm
     class LOADER,PARSED,EMB ingest
-    class LS obs
+    class LF,LS obs
     class GD,RAGAS,TC,JUDGE evals
     class MEM memory
 ```
@@ -165,6 +166,7 @@ graph TB
 
     subgraph OBS ["7. Monitoring & Observability"]
         direction LR
+        LF["🔥 Logfire\nDistributed Tracing"]
         LS["🦜 LangSmith\nAgent Step Tracing"]
     end
 
@@ -195,7 +197,7 @@ graph TB
     RAGAS --> JG
 
     %% ── Observability ────────────────────────────────────────────────────────
-    API -.->|"spans"| LS
+    API -.->|"spans"| LF
     AGENT -.->|"traces"| LS
 
     %% ── Colours ──────────────────────────────────────────────────────────────
@@ -214,7 +216,7 @@ graph TB
     class QD,FR,G1 knowledge
     class LOAD,PROC,EMB ingest
     class GD,RAGAS,TC,JG evals
-    class LS obs
+    class LF,LS obs
     class MEM memory
 ```
 
@@ -231,7 +233,7 @@ graph TB
     E["🦙 5. Groq Direct\nLlama 3.3 70B"]
     F["📥 6. Data Ingestion\nLocal Parsers · Gemini Embeddings · processed_data/"]
     G["🧪 7. RAGAS Evals\nFaithfulness · Precision · Recall · Correctness"]
-    H["📡 8. Monitoring\nLangSmith"]
+    H["📡 8. Monitoring\nLogfire + LangSmith"]
 
     A --> B --> C
     C --> D --> C

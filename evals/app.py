@@ -7,6 +7,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv()
 
+import logfire
+
+logfire.configure(
+    token=os.getenv("LOGFIRE_TOKEN"),
+    service_name="evals"
+)
+
 # ─────────────────────────────────────────────────────────────────────────────
 import asyncio
 import json
@@ -225,8 +232,9 @@ with tab2:
                     text=f"[{i+1}/{total}] ✅ Done",
                 )
 
-        enriched = run_pipeline(golden, progress_callback=pipeline_cb)
-        st.session_state.enriched_dataset = enriched
+        with logfire.span("🚀 Streamlit — Run Pipeline Button"):
+            enriched = run_pipeline(golden, progress_callback=pipeline_cb)
+            st.session_state.enriched_dataset = enriched
 
         progress_bar.progress(100, text="✅ All responses collected!")
         status_slot.success(f"💾 {len(enriched['rag_samples'])} responses stored in session.")
@@ -243,10 +251,14 @@ with tab2:
                 text=f"[{i+1}/{total}] Testing: {input_text[:60]}...",
             )
 
-        g_results = run_guardrails_eval(enriched["guardrails_samples"], progress_callback=g_cb)
-        g_metrics = compute_guardrails_metrics(g_results)
-        st.session_state.guardrails_results = g_results
-        st.session_state.pipeline_done = True
+        with logfire.span("🛡️ Streamlit — Guardrails Tests"):
+            g_results = run_guardrails_eval(
+                enriched["guardrails_samples"],
+                progress_callback=g_cb
+            )
+            g_metrics = compute_guardrails_metrics(g_results)
+            st.session_state.guardrails_results = g_results
+            st.session_state.pipeline_done = True
 
         g_progress.progress(100, text="✅ Guardrails tests complete!")
 
@@ -354,10 +366,14 @@ with tab3:
             def status_cb(msg: str):
                 status_slot.info(msg)
 
-            metric_results = _run_async(
-                run_all_metrics(st.session_state.enriched_dataset, status_cb=status_cb)
-            )
-            st.session_state.metric_results = metric_results
+            with logfire.span("📊 Streamlit — Run Metrics Button"):
+                metric_results = _run_async(
+                    run_all_metrics(
+                        st.session_state.enriched_dataset,
+                        status_cb=status_cb
+                    )
+                )
+                st.session_state.metric_results = metric_results
 
             status_slot.success("✅ All 6 experiments complete!")
 

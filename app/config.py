@@ -19,6 +19,7 @@ class Settings:
     GROQ_FALLBACK_API_KEY = os.getenv("GROQ_FALLBACK_API_KEY")
 
     # --- OBSERVABILITY ---
+    LOGFIRE_TOKEN = os.getenv("LOGFIRE_TOKEN")
     LANGSMITH_TRACING = os.getenv("LANGSMITH_TRACING", "true")
     LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
     LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "rag_scale_test")

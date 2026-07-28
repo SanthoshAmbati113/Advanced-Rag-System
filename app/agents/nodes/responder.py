@@ -1,3 +1,4 @@
+import logfire
 from app.agents.state import AgentState
 from langchain_groq import ChatGroq
 from app.config import settings
@@ -25,6 +26,8 @@ def generate_node(state: AgentState):
     user_msg = state["messages"][-1]["content"] if state["messages"] else ""
 
     if query == "CONVERSATIONAL":
+        logfire.info("Generating conversational response using memory.")
+
         prompt = f"""
         You are a friendly and helpful Enterprise AI Assistant.
         Answer the user's latest message using the CONVERSATION HISTORY below.
@@ -36,6 +39,8 @@ def generate_node(state: AgentState):
         "{user_msg}"
         """
     else:
+        logfire.info("Generating technical RAG response.")
+
         max_context_chars = 25000
         full_context = ""
 
@@ -43,6 +48,7 @@ def generate_node(state: AgentState):
             if len(full_context) + len(doc) < max_context_chars:
                 full_context += doc + "\n\n"
             else:
+                logfire.warning("Context truncated to fit Groq TPM limits.")
                 break
 
         prompt = f"""
@@ -59,16 +65,20 @@ def generate_node(state: AgentState):
         "{user_msg}"
         """
 
-    try:
-        response = llm.invoke(prompt)
-        content = response.content
+    with logfire.span("✍️ LLM Synthesis"):
+        try:
+            response = llm.invoke(prompt)
+            content = response.content
 
-        return {
-            "final_answer": content,
-            "status": "Response generated.",
-            "plan": state["plan"],
-            "messages": [{"role": "assistant", "content": content}]
-        }
+            logfire.info("✅ Response synthesised via LLM.")
 
-    except Exception as e:
-        raise e
+            return {
+                "final_answer": content,
+                "status": "Response generated.",
+                "plan": state["plan"],
+                "messages": [{"role": "assistant", "content": content}]
+            }
+
+        except Exception as e:
+            logfire.error(f"LLM Generation failed: {e}")
+            raise e

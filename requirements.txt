@@ -40,6 +40,8 @@ pdfplumber                  # Fallback PDF parser for scanned/complex layouts
 # --- OBSERVABILITY & DISTRIBUTED TRACING ---
 langsmith                   # Specialized tracing for LangChain/LangGraph
 loguru                      # Enhanced logging for Python
+logfire[fastapi,requests]   # Pydantic Logfire — FastAPI + requests instrumentation
+
 
 # --- GUARDRAILS ---
 nemoguardrails              # NVIDIA NeMo Guardrails for input/output safety rails
@@ -49,3 +51,7 @@ langchain-nvidia-ai-endpoints # LangChain integration with NVIDIA AI Endpoints
 ragas                       # RAG-specific evaluation metrics (Faithfulness, Relevancy, Recall)
 deepeval                    # Pytest-compatible test runner wrapping RAGAS & safety metrics
 langfuse                    # Live production monitoring, tracing & user feedback collection
+
+langchain_google_genai
+
+langchain-google-vertexai
