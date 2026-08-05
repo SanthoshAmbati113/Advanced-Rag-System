@@ -6,6 +6,7 @@ A production-grade, enterprise-level RAG system built with **LangGraph**, **Dire
 
 - **Agentic Intelligence**: LangGraph for cyclic reasoning, multi-step planning, and conversation memory.
 - **Guardrails**: NeMo Guardrails gate blocks off-topic, jailbreak, and injection inputs before any retrieval.
+- **Semantic Caching**: Qdrant-based response caching with vector similarity search to reduce latency and token costs.
 - **Direct LLM Integration**: Direct ChatGroq integration for lightning-fast Llama 3.3 models without gateway overhead.
 - **Enterprise Search**: Qdrant Cloud for high-performance vector search + FlashRank for local semantic reranking.
 - **Gemini Embeddings**: Google `gemini-embedding-2-preview` (3072-dim) via `langchain-google-genai`.
@@ -23,13 +24,16 @@ graph TD
     UI --> API[FastAPI /query]
     API --> Guard{NeMo Guardrails}
     Guard -->|Blocked| UI
-    Guard -->|Pass| Planner{Planner Node}
+    Guard -->|Pass| Cache{Semantic Cache}
+    Cache -->|Hit| UI
+    Cache -->|Miss| Planner{Planner Node}
     Planner -->|Conversational| Responder[Responder Node]
     Planner -->|Technical| Retriever[Retriever Node]
     Retriever --> Reranker[FlashRank Local Reranker]
     Reranker --> Responder
     Responder --> UI
     Responder -.-> Memory[(LangGraph MemorySaver)]
+    Responder -.-> Cache
 ```
 
 ---
@@ -40,6 +44,7 @@ graph TD
 ├── app/
 │   ├── agents/
 │   │   └── nodes/       # Planner, Retriever, Responder LangGraph nodes
+│   ├── cache/           # Semantic response caching (Qdrant-based)
 │   ├── guardrails/      # NeMo Guardrails input/output filtering
 │   ├── ingestion/
 │   │   ├── chunking/    # Paragraph-based text splitter (1500 char max)
@@ -47,7 +52,7 @@ graph TD
 │   ├── services/
 │   │   └── retrieval/   # Gemini embeddings + Qdrant search + FlashRank reranking
 │   ├── config.py        # Centralized environment variable management
-│   └── main.py          # FastAPI entrypoint — guardrails gate + /query endpoint
+│   └── main.py          # FastAPI entrypoint — guardrails + cache + /query endpoint
 ├── evals/               # RAGAS evaluation suite + Streamlit 3-tab demo
 ├── ui/                  # Streamlit chat interface with reasoning step transparency
 ├── processed_data/      # Auto-generated — parsed & chunked JSON output per document
@@ -65,6 +70,7 @@ graph TD
 | Orchestration | LangChain + LangGraph |
 | LLMs | Groq (Llama 3.3 70B) via direct ChatGroq |
 | Guardrails | NeMo Guardrails |
+| Semantic Cache | Qdrant (vector similarity search) |
 | Vector DB | Qdrant Cloud |
 | Reranking | FlashRank (local, zero-latency) |
 | Embeddings | Gemini `gemini-embedding-2-preview` (3072-dim) |
@@ -115,6 +121,12 @@ JUDGE_GROQ = ""
 
 # Gemini Embeddings
 GEMINI_API_KEY = ""
+
+# Semantic Cache (Optional - set CACHE_ENABLED=false to disable)
+CACHE_ENABLED = true
+CACHE_COLLECTION = semantic_cache
+CACHE_SIMILARITY_THRESHOLD = 0.93
+CACHE_TTL_SECONDS = 604800
 ```
 
 ### 3. Run data ingestion

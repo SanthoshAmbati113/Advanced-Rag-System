@@ -54,6 +54,7 @@ define user express greeting
   "good afternoon"
   "what's up"
   "howdy"
+  "How are you"
 
 define bot express greeting
   "Hello! I'm your Enterprise IT Assistant. I specialise in Kubernetes, Intel hardware, and enterprise networking. What can I help you with today?"

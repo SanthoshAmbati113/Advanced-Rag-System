@@ -17,6 +17,13 @@ graph LR
         GR{"NeMo\nGuardrails"}
     end
 
+    %% ── Semantic Cache ────────────────────────────────────────────────────────
+    subgraph CACHE ["💾  Semantic Cache"]
+        direction TB
+        QC[("🗄️ Qdrant Cache\nsemantic_cache")]
+        SC["Vector Similarity\nThreshold: 0.93"]
+    end
+
     %% ── LangGraph Agent ──────────────────────────────────────────────────────
     subgraph AGENT ["🧠  LangGraph Agentic Core"]
         direction TB
@@ -67,7 +74,9 @@ graph LR
     CHAT -->|query| API
     API --> GR
     GR -->|"❌ blocked"| CHAT
-    GR -->|"✅ pass"| PL
+    GR -->|"✅ pass"| SC
+    SC -->|"💾 hit"| CHAT
+    SC -->|"💾 miss"| PL
     PL -->|conversational| RS
     PL -->|technical| RT
     RT --> QD
@@ -77,6 +86,7 @@ graph LR
     PL --> G1
     RS -.-> MEM
     MEM -.-> PL
+    RS -.-> QC
 
     %% ── Ingestion Flow ───────────────────────────────────────────────────────
     LOADER --> PARSED
@@ -96,6 +106,7 @@ graph LR
     %% ── Colors ───────────────────────────────────────────────────────────────
     classDef ui        fill:#3B82F6,stroke:#1D4ED8,color:#fff,rx:8
     classDef safety    fill:#EF4444,stroke:#B91C1C,color:#fff,rx:8
+    classDef cache     fill:#8B5CF6,stroke:#6D28D9,color:#fff,rx:8
     classDef agent     fill:#8B5CF6,stroke:#6D28D9,color:#fff,rx:8
     classDef retrieval fill:#10B981,stroke:#047857,color:#fff,rx:8
     classDef llm       fill:#F59E0B,stroke:#B45309,color:#fff,rx:8
@@ -106,6 +117,7 @@ graph LR
 
     class CHAT,EVAL_UI ui
     class API,GR safety
+    class QC,SC cache
     class PL,RT,RS agent
     class QD,FR retrieval
     class G1 llm
@@ -132,6 +144,12 @@ graph TB
         direction LR
         API["⚡ FastAPI  /query"]
         GR{"🛡️ NeMo Guardrails\nBlocks · Jailbreak · Off-topic · Injection"}
+    end
+
+    subgraph CACHE ["2.5 Semantic Cache"]
+        direction LR
+        QC[("🗄️ Qdrant Cache\nsemantic_cache")]
+        SC["Vector Similarity\nThreshold: 0.93"]
     end
 
     subgraph AGENT ["3. Agent Engine  —  LangGraph"]
@@ -175,7 +193,9 @@ graph TB
     EAPP -->|phase 1 query| API
     API --> GR
     GR -->|"❌ blocked"| CHAT
-    GR -->|"✅ pass"| PL
+    GR -->|"✅ pass"| SC
+    SC -->|"💾 hit"| CHAT
+    SC -->|"💾 miss"| PL
     PL -->|"technical"| RT
     PL -->|"conversational"| RS
     RT --> QD
@@ -185,6 +205,7 @@ graph TB
     PL --> G1
     RS -.-> MEM
     MEM -.-> PL
+    RS -.-> QC
 
     %% ── Ingestion Flow ───────────────────────────────────────────────────────
     LOAD --> PROC
@@ -203,6 +224,7 @@ graph TB
     %% ── Colours ──────────────────────────────────────────────────────────────
     classDef ui        fill:#2563EB,stroke:#1E40AF,color:#fff
     classDef safety    fill:#DC2626,stroke:#991B1B,color:#fff
+    classDef cache     fill:#8B5CF6,stroke:#6D28D9,color:#fff
     classDef agent     fill:#7C3AED,stroke:#5B21B6,color:#fff
     classDef knowledge fill:#D97706,stroke:#92400E,color:#fff
     classDef ingest    fill:#4F46E5,stroke:#3730A3,color:#fff
@@ -212,6 +234,7 @@ graph TB
 
     class CHAT,EAPP ui
     class API,GR safety
+    class QC,SC cache
     class PL,RT,RS agent
     class QD,FR,G1 knowledge
     class LOAD,PROC,EMB ingest
@@ -228,23 +251,26 @@ graph TB
 graph TB
     A["🖥️ 1. Streamlit UI\nChat + Eval App"]
     B["⚡ 2. FastAPI + 🛡️ NeMo Guardrails"]
-    C["🧠 3. LangGraph Agent\nPlanner → Retriever → Responder"]
-    D["🗄️ 4. Qdrant Cloud\n+ FlashRank Reranker"]
-    E["🦙 5. Groq Direct\nLlama 3.3 70B"]
-    F["📥 6. Data Ingestion\nLocal Parsers · Gemini Embeddings · processed_data/"]
-    G["🧪 7. RAGAS Evals\nFaithfulness · Precision · Recall · Correctness"]
-    H["📡 8. Monitoring\nLogfire + LangSmith"]
+    C["💾 2.5 Semantic Cache\nQdrant Vector Similarity"]
+    D["🧠 3. LangGraph Agent\nPlanner → Retriever → Responder"]
+    E["🗄️ 4. Qdrant Cloud\n+ FlashRank Reranker"]
+    F["🦙 5. Groq Direct\nLlama 3.3 70B"]
+    G["📥 6. Data Ingestion\nLocal Parsers · Gemini Embeddings · processed_data/"]
+    H["🧪 7. RAGAS Evals\nFaithfulness · Precision · Recall · Correctness"]
+    I["📡 8. Monitoring\nLogfire + LangSmith"]
 
     A --> B --> C
-    C --> D --> C
-    C --> E
-    F --> D
-    A -.-> G
-    B -.-> H
-    C -.-> H
+    C -->|"hit"| A
+    C -->|"miss"| D
+    D --> E --> D
+    G --> E
+    A -.-> H
+    B -.-> I
+    D -.-> I
 
     classDef ui      fill:#2563EB,stroke:#1E40AF,color:#fff
     classDef safety  fill:#DC2626,stroke:#991B1B,color:#fff
+    classDef cache   fill:#8B5CF6,stroke:#6D28D9,color:#fff
     classDef agent   fill:#7C3AED,stroke:#5B21B6,color:#fff
     classDef db      fill:#059669,stroke:#065F46,color:#fff
     classDef llm     fill:#D97706,stroke:#92400E,color:#fff
@@ -254,10 +280,11 @@ graph TB
 
     class A ui
     class B safety
-    class C agent
-    class D db
-    class E llm
-    class F ingest
-    class G evals
-    class H obs
+    class C cache
+    class D agent
+    class E db
+    class F llm
+    class G ingest
+    class H evals
+    class I obs
 ```

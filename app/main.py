@@ -13,6 +13,7 @@ logfire.configure(token=os.getenv("LOGFIRE_TOKEN"))
 from fastapi import FastAPI, Response
 from app.agents.graph import rag_agent
 from app.guardrails import initialize_rails, guard
+from app.cache import get_cache
 
 from pydantic import BaseModel
 from typing import Optional
@@ -52,9 +53,18 @@ def get_graph_image():
 def query(request: QueryRequest):
     """
     Executes the LangGraph RAG flow with memory using a POST request.
+    
+    Flow:
+    1. Guardrails check (blocks malicious/off-topic queries)
+    2. Semantic cache lookup (bypasses RAG pipeline on hit)
+    3. LangGraph RAG pipeline (on cache miss)
+    4. Cache storage (after successful RAG generation)
     """
     q = request.q
     thread_id = request.thread_id
+    
+    # Get semantic cache instance
+    cache = get_cache()
 
     initial_state = {
         "messages": [{"role": "user", "content": q}],
@@ -80,13 +90,56 @@ def query(request: QueryRequest):
                 "sources": []
             }
 
-        # Gate 2: LangGraph RAG pipeline
+        # Gate 2: Semantic Cache — checks for similar cached responses
+        # This runs BEFORE the expensive RAG pipeline to reduce latency and token costs
+        with logfire.span("Cache Check"):
+            cache_result = cache.lookup(q)
+            
+            if cache_result.hit:
+                # Cache hit - return cached answer immediately
+                logfire.info(
+                    f"💾 Cache hit: similarity={cache_result.similarity_score:.4f}, "
+                    f"latency_saved={cache_result.latency_saved_ms:.0f}ms"
+                )
+                return {
+                    "question": q,
+                    "answer": cache_result.answer,
+                    "thought_process": [
+                        "Intent: Cache Hit",
+                        f"Similarity: {cache_result.similarity_score:.4f}",
+                        f"Latency Saved: {cache_result.latency_saved_ms:.0f}ms"
+                    ],
+                    "status": "Answer retrieved from cache.",
+                    "sources": [],
+                    "cache_metadata": {
+                        "similarity_score": cache_result.similarity_score,
+                        "latency_saved_ms": cache_result.latency_saved_ms,
+                        "model_name": cache_result.entry.model_name if cache_result.entry else None,
+                        "cached_at": cache_result.entry.timestamp.isoformat() if cache_result.entry else None
+                    }
+                }
+            else:
+                logfire.info("💾 Cache miss - proceeding with RAG pipeline")
+
+        # Gate 3: LangGraph RAG pipeline (on cache miss)
         # Run the graph synchronously to preserve Logfire context variables
         final_output = rag_agent.invoke(initial_state, config=config)
+        
+        final_answer = final_output.get("final_answer")
+        
+        # Store the result in cache for future queries
+        # This happens after successful RAG pipeline execution
+        with logfire.span("Cache Storage"):
+            cache.store(
+                question=q,
+                answer=final_answer,
+                model_name="llama-3.3-70b-versatile",
+                document_version="v1"
+            )
 
         return {
             "question": q,
-            "answer": final_output.get("final_answer"),
+            "answer": final_answer,
             "thought_process": final_output.get("plan"),
             "status": final_output.get("status"),
             "sources": final_output.get("documents", [])
