@@ -62,11 +62,11 @@ For ALL Kubernetes-related questions, return ONLY a concise search query.
 
 Examples:
 
-User: Hi
+User: Can you explain that with an example?
 Output:
 CONVERSATIONAL
 
-User: Thank you
+User: What are the advantages of this approach?
 Output:
 CONVERSATIONAL
 
