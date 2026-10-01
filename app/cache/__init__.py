@@ -1,13 +1,4 @@
-"""
-Semantic Cache Module for RAG System
-
-This module provides semantic response caching to reduce latency and token costs.
-It uses Qdrant as the backend for storing cached question-answer pairs with
-vector similarity search for cache lookup.
-
-The cache layer is modular and can be extended with Redis or other backends
-without changing the rest of the application.
-"""
+"""Static FAQ cache: Qdrant similarity lookup over a frozen Q&A collection."""
 
 from app.cache.semantic_cache import SemanticCache, get_cache, reset_cache
 from app.cache.models import CacheEntry, CacheResult
@@ -21,5 +12,5 @@ __all__ = [
     "CacheEntry",
     "CacheResult",
     "CacheBackend",
-    "QdrantCacheBackend"
+    "QdrantCacheBackend",
 ]

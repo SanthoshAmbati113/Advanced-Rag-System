@@ -12,14 +12,14 @@ _rails: LLMRails | None = None
 def initialize_rails() -> None:
     """
     Build the NeMo LLMRails singleton at app startup.
-    Uses llama-3.1-8b-instant for fast intent classification at the gate —
-    the heavier llama-3.3-70b-versatile is reserved for the RAG pipeline.
+    Uses openai/gpt-oss-safeguard-20b for fast intent classification at the gate —
+    the heavier openai/gpt-oss-20b is reserved for the RAG pipeline.
     """
     global _rails
 
     guard_llm = ChatGroq(
         api_key=settings.GROQ_API_KEY,
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-safeguard-20b",
         temperature=0
     )
 
@@ -50,6 +50,7 @@ def guard(message: str) -> tuple[bool, str | None]:
 
         # NeMo returns {'role': 'assistant', 'content': '...'} — extract text
         content = result.get("content", "") if isinstance(result, dict) else str(result)
+        logfire.info(f"🛡️ Guardrails result: {content[:80]}...")
 
         fired = any(indicator in content for indicator in RAIL_INDICATORS)
 

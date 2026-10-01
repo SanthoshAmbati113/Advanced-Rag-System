@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup 
-
+import logfire
 def parse_html(file_path: str):
     """
     Parses HTML content using BeautifulSoup.

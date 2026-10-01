@@ -1,4 +1,5 @@
 from pypdf import PdfReader
+import logfire
 
 
 def parse_pdf(file_path: str) -> str:

@@ -1,0 +1,302 @@
+[
+  {
+    "id": "k8s-overview-001",
+    "question": "What is Kubernetes?",
+    "aliases": [
+      "Explain Kubernetes",
+      "What is K8s?",
+      "What does Kubernetes do?"
+    ],
+    "answer": "Kubernetes (K8s) was a project spun out of Google as an open source, next-gen container scheduler, designed with the lessons learned from developing and managing Borg and Omega. It was designed from the ground up as a loosely coupled collection of components centered around deploying, maintaining, and scaling applications. It is described as the linux kernel of distributed systems: it abstracts away the underlying hardware of the nodes and provides a uniform interface for applications to be deployed and to consume the shared pool of resources.",
+    "source": "architecture.pptx",
+    "topic": "overview"
+  },
+  {
+    "id": "k8s-arch-002",
+    "question": "What are the main components of Kubernetes architecture?",
+    "aliases": [
+      "What is the difference between master and node in Kubernetes?",
+      "What are the control plane and worker node components?",
+      "Explain Kubernetes architecture"
+    ],
+    "answer": "A Kubernetes cluster has Masters and Nodes. Masters act as the primary control plane and are responsible at a minimum for running the API Server, scheduler, and cluster controller; they commonly also manage storing cluster state, cloud-provider specific components and other essential services. The master components are kube-apiserver, etcd, kube-controller-manager, cloud-controller-manager, and kube-scheduler. Nodes are the 'workers' of the cluster: they run a minimal agent that manages the node itself and execute workloads as designated by the master. The node components are kubelet, kube-proxy, and the container runtime engine.",
+    "source": "architecture.pptx",
+    "topic": "architecture"
+  },
+  {
+    "id": "k8s-pod-003",
+    "question": "What is a Pod in Kubernetes?",
+    "aliases": [
+      "Explain Kubernetes pods",
+      "What does a pod do in k8s?",
+      "Define pod"
+    ],
+    "answer": "A Pod is the smallest unit of work or management resource within Kubernetes. It is comprised of one or more containers that share their storage, network, and context (namespace, cgroups etc). Containers in a pod exist within the same network namespace and share an IP, which allows intra-pod communication over localhost. Pods are given a cluster-unique IP for the duration of their lifecycle, but pods themselves are fundamentally ephemeral.",
+    "source": "architecture.pptx",
+    "topic": "workloads"
+  },
+  {
+    "id": "k8s-workloads-004",
+    "question": "What is the difference between a Deployment and a StatefulSet?",
+    "aliases": [
+      "Deployment vs StatefulSet",
+      "When should I use a StatefulSet instead of a Deployment?",
+      "Which controller manages stateful pods?"
+    ],
+    "answer": "A Deployment is a declarative method of managing stateless Pods and ReplicaSets. It provides rollback functionality in addition to more granular update control mechanisms. A StatefulSet is a controller tailored to managing Pods that must persist or maintain state: pod identity including hostname, network, and storage is persisted. StatefulSet pods are given unique ordinal names using the pattern <statefulset name>-<ordinal index>, and independent persistent volumes are created based on the 'volumeClaimTemplates'.",
+    "source": "architecture.pptx",
+    "topic": "workloads"
+  },
+  {
+    "id": "k8s-service-005",
+    "question": "What are the Service types in Kubernetes?",
+    "aliases": [
+      "ClusterIP vs NodePort vs LoadBalancer",
+      "How do I expose a service in Kubernetes?",
+      "Explain Kubernetes Service types"
+    ],
+    "answer": "A Service is a method of exposing and consuming L4 Pod network accessible resources, and it acts as the unified method of accessing replicated pods. It uses label selectors to map groups of pods and ports to a cluster-unique virtual IP. There are four major Service types: ClusterIP exposes the service on a strictly cluster-internal IP (the default); NodePort exposes the service on each node's IP on a statically defined port; LoadBalancer works in combination with a cloud provider to expose the service outside the cluster on a static external IP; ExternalName references endpoints outside the cluster by providing a static, internally referenced DNS name.",
+    "source": "architecture.pptx",
+    "topic": "networking"
+  },
+  {
+    "id": "k8s-storage-006",
+    "question": "What is the difference between a PersistentVolume and a PersistentVolumeClaim?",
+    "aliases": [
+      "PV vs PVC",
+      "What is a PVC in Kubernetes?",
+      "How does persistent storage work in Kubernetes?"
+    ],
+    "answer": "A PersistentVolume (PV) represents a storage resource. PVs are commonly linked to a backing storage resource such as NFS, GCEPersistentDisk, or RBD, and are provisioned ahead of time. A PV is a cluster-wide resource, is not directly consumable by a Pod, and its lifecycle is handled independently from a pod. A PersistentVolumeClaim (PVC) is a request for storage that satisfies a set of requirements instead of mapping to a storage resource directly, and is commonly used with dynamically provisioned storage. PVCs are scoped to namespaces and consume storage from matching PVs or StorageClasses based on storageClass and selectors.",
+    "source": "architecture.pptx",
+    "topic": "storage"
+  },
+  {
+    "id": "k8s-config-007",
+    "question": "What is the difference between a ConfigMap and a Secret?",
+    "aliases": [
+      "ConfigMap vs Secret",
+      "How do I pass configuration to a pod?",
+      "How are Secrets stored in Kubernetes?"
+    ],
+    "answer": "A ConfigMap is externalized data stored within Kubernetes that can be referenced as a commandline argument, environment variable, or injected as a file into a volume mount. It is ideal for separating a containerized application from its configuration. A Secret is functionally identical to a ConfigMap, but is stored encoded as base64 and encrypted at rest (if configured). Both can be used in Pod config by being injected as a file or passed as an environment variable.",
+    "source": "architecture.pptx",
+    "topic": "configuration"
+  },
+  {
+    "id": "k8s-job-008",
+    "question": "What is a Kubernetes Job and how does it differ from a Deployment?",
+    "aliases": [
+      "Explain Kubernetes Jobs",
+      "What are the restart policies for a Job?",
+      "How do completions and parallelism work in a Job?"
+    ],
+    "answer": "A Kubernetes Job is a resource designed to run finite workloads that execute a task to completion. Unlike Pods created via Deployments, which run indefinitely, a Job ensures that its associated Pods complete their task and then exit successfully. Jobs require a restart policy of OnFailure (kubelet restarts the container within the same Pod if it crashes) or Never (the entire Pod is marked as failed and the Job controller creates a new Pod); Always is not allowed because it would prevent the Pod from ever completing. Jobs belong to the batch/v1 API group, and the Pod template cannot be modified after Job creation. The 'completions' field sets the number of Pods that must successfully complete, and 'parallelism' sets the maximum number of concurrent Pods.",
+    "source": "cronjobs.docx",
+    "topic": "jobs"
+  },
+  {
+    "id": "k8s-cronjob-009",
+    "question": "What is a CronJob and how do I configure its schedule?",
+    "aliases": [
+      "How do I schedule a job in Kubernetes?",
+      "Kubernetes cron schedule format",
+      "How do I set a timezone for a CronJob?"
+    ],
+    "answer": "A CronJob is a thin wrapper around Jobs that enables scheduling. It automatically creates Job objects based on a defined schedule using the standard cron format, which has five fields: minute (0-59), hour (0-23), day of the month (1-31), month (1-12), and day of the week (0-6, Sunday to Saturday). For example, \"30 2 * * *\" runs daily at 2:30 AM, \"0 9 * * 1\" runs every Monday at 9:00 AM, and \"*/15 * * * *\" runs every 15 minutes. Shorthand expressions such as @hourly, @daily, @weekly, @monthly, and @yearly are also supported. To avoid timezone problems, specify the timeZone field, for example timeZone: \"America/New_York\".",
+    "source": "cronjobs.docx",
+    "topic": "cronjobs"
+  },
+  {
+    "id": "k8s-deploy-flow-010",
+    "question": "What happens behind the scenes when you deploy something to Kubernetes?",
+    "aliases": [
+      "How does a Kubernetes deployment work end to end?",
+      "What is the pod creation flow in Kubernetes?",
+      "How does a pod get scheduled and started?"
+    ],
+    "answer": "First, kubectl validates the manifest client-side and serializes it into a JSON payload. The apiserver request loop then authenticates the request, runs authorization (Node, ABAC, RBAC, or webhook), applies admission control, stores the request in etcd, lets initializers mutate it, and publishes it. The Deployment Controller is notified, reconciles desired vs current state, and requests a new ReplicaSet. The ReplicaSet Controller then requests the desired number of pods, which are published in the 'Pending' phase. The Scheduler finds pods with no NodeName, applies scheduling rules and filters to find a suitable node, and POSTs a pod-to-node binding to the apiserver, which updates the pod status to 'PodScheduled'. The kubelet on that node prepares the pod environment (pulling secrets, provisioning storage, applying AppArmor profiles), provisions a 'pause' container via the CRI, plumbs the network via the CNI, pulls images, starts any init containers, and then starts the primary containers. Once liveness/readiness probes complete successfully, PodStatus is set to ready and the pod is deployed.",
+    "source": "architecture.pptx",
+    "topic": "deployment-flow"
+  },
+  {
+    "id": "k8s-hpa-011",
+    "question": "What is the Horizontal Pod Autoscaler (HPA) and how does it work?",
+    "aliases": [
+      "Explain HPA in Kubernetes",
+      "How does Kubernetes scale pods automatically?",
+      "What is horizontal pod autoscaling?"
+    ],
+    "answer": "Horizontal Pod Autoscaling (HPA) automatically scales the number of pods in a replication controller, deployment, or replica set based on observed CPU utilization (or other select metrics). This lets your application scale out (add more pods) or scale in (reduce the number of pods) in response to load changes. HPA works by continuously monitoring the specified metrics (e.g., CPU usage, memory usage, custom metrics), comparing the current values against predefined thresholds, and then scaling pods: if the metric values exceed the thresholds it increases the number of pods, and if they drop below the thresholds it decreases the number of pods. Its advantages are elasticity, cost-efficiency, and maintaining performance during high traffic periods.",
+    "source": "pods_autoscale.html",
+    "topic": "autoscaling"
+  },
+  {
+    "id": "k8s-vpa-012",
+    "question": "What is the Vertical Pod Autoscaler (VPA) and what update modes does it support?",
+    "aliases": [
+      "Explain VPA in Kubernetes",
+      "How does Kubernetes adjust pod CPU and memory automatically?",
+      "What are the VPA updateMode options?"
+    ],
+    "answer": "Vertical Pod Autoscaling (VPA) adjusts the CPU and memory resource requests and limits for your pods. Instead of adding more pods, VPA modifies the resources allocated to existing pods. It works by monitoring the CPU and memory usage of pods, recommending resource adjustments based on usage patterns, and then automatically applying the recommended changes to the pod specifications, which typically requires a pod restart. The valid updateMode options are: Off (VPA only provides recommendations and does not change resource requirements), Initial (VPA only assigns resource requests on pod creation and never changes them later), Recreate (VPA assigns requests at pod creation and updates existing pods by evicting and recreating them), and Auto (VPA recreates the pod based on the recommendation).",
+    "source": "pods_autoscale.html",
+    "topic": "autoscaling"
+  },
+  {
+    "id": "k8s-autoscale-compare-013",
+    "question": "What is the difference between HPA and VPA, and which one should I use?",
+    "aliases": [
+      "HPA vs VPA",
+      "Horizontal vs vertical pod autoscaling",
+      "When should I use VPA instead of HPA?"
+    ],
+    "answer": "HPA changes the number of pods, while VPA changes the CPU and memory resources allocated to existing pods. HPA is ideal for stateless applications that can easily scale horizontally by adding more pods; it is useful when you need to handle variable workloads and ensure high availability. VPA is suitable for applications where scaling horizontally is not feasible or when you need to optimize resource usage for individual pods; it is beneficial for stateful applications or those with varying resource needs.",
+    "source": "pods_autoscale.html",
+    "topic": "autoscaling"
+  },
+  {
+    "id": "k8s-metrics-server-014",
+    "question": "Why do I need the Metrics Server for autoscaling and how do I install it?",
+    "aliases": [
+      "How to install Metrics Server in Kubernetes",
+      "Why is HPA not working without metrics server?",
+      "How do I verify Metrics Server is working?"
+    ],
+    "answer": "The Metrics Server collects resource usage metrics from the cluster's nodes and pods, which are necessary for autoscaling decisions, so it must be installed before testing HPA and VPA. You can install it using either a YAML manifest or the official Helm chart. To install the latest release from the YAML manifest, run: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml. Verify the installation by checking that the Metrics Server pods are running in the kube-system namespace with: kubectl get pods -n kube-system | grep metrics-server. Confirm it is collecting metrics by running kubectl top nodes and kubectl top pods --all-namespaces, which should show CPU and memory usage.",
+    "source": "pods_autoscale.html",
+    "topic": "autoscaling"
+  },
+  {
+    "id": "k8s-hpa-setup-015",
+    "question": "How do I set up an HPA for a Deployment?",
+    "aliases": [
+      "HPA example YAML",
+      "How do I autoscale an nginx deployment based on CPU?",
+      "How do I test that HPA is scaling pods?"
+    ],
+    "answer": "To set up HPA you define an HPA object in your cluster. In the example, a Deployment named hpa-deploy runs nginx with 1 replica, a CPU request of 25m and a CPU limit of 200m, and is exposed by a Service named nginx-svc. The HorizontalPodAutoscaler (apiVersion autoscaling/v2) named nginx-hpa uses scaleTargetRef to target the Deployment hpa-deploy, sets minReplicas to 1 and maxReplicas to 10, and uses a Resource metric of type cpu with target type Utilization and averageUtilization 50, so the HPA scales the nginx pods between 1 and 10 aiming to keep CPU utilization around 50%. To test it, run a load-generator pod (busybox:1.28) that continuously requests http://nginx-svc, and monitor with kubectl top po and kubectl get hpa -w. In the example, utilization rose to 80%/50% and the replica count increased from 1 to 2.",
+    "source": "pods_autoscale.html",
+    "topic": "autoscaling"
+  },
+  {
+    "id": "k8s-vpa-bounds-016",
+    "question": "How do minAllowed and maxAllowed work in VPA, and why didn't VPA set the CPU request to maxAllowed?",
+    "aliases": [
+      "Why did VPA only increase CPU to 126m instead of 200m?",
+      "What is minAllowed in VPA?",
+      "How do I exclude a container from VPA scaling?"
+    ],
+    "answer": "When VPA first starts managing a pod, it ensures the pod's resource requests are within the specified minAllowed and maxAllowed ranges. In the example, minAllowed CPU is 100m, so the pods' CPU request was raised from 50m to at least 100m. After that, VPA keeps monitoring CPU and memory usage and makes recommendations based on observed usage; it does not jump to maxAllowed unless the observed usage justifies it. maxAllowed (200m CPU in the example) is a ceiling rather than a target. VPA aims to provide just enough resources without over-provisioning and adjusts incrementally to avoid sudden large changes that might disrupt the application, which is why the request went to 126m and later 163m instead of 200m. To exclude a specific container from scaling, set its mode to 'Off' under resourcePolicy.containerPolicies in the VPA spec.",
+    "source": "pods_autoscale.html",
+    "topic": "autoscaling"
+  },
+  {
+    "id": "k8s-job-status-017",
+    "question": "How do I check the status of a Kubernetes Job?",
+    "aliases": [
+      "How to monitor Kubernetes job status",
+      "What do the COMPLETIONS columns mean in kubectl get jobs?",
+      "What are the possible Job statuses?"
+    ],
+    "answer": "Use kubectl get jobs, which shows NAME, COMPLETIONS (number of completed pods / desired completions), DURATION (how long the job took to run), and AGE. If a job shows 0/1 under COMPLETIONS, it might still be running or has failed, so wait a few seconds and run the command again. For more detail use kubectl describe job <job-name>, which shows labels and annotations, selector details, parallelism and completion requirements, pod statuses, and events (look at the Events section at the bottom). A job can be Active (still running), Completed (finished successfully), or Failed (failed after reaching its backoff limit). You can also run kubectl get pods and look for the STATUS column showing Completed.",
+    "source": "monitor_job.docx",
+    "topic": "monitoring"
+  },
+  {
+    "id": "k8s-job-logs-018",
+    "question": "How do I view the logs of a Kubernetes Job?",
+    "aliases": [
+      "kubectl logs for a job pod",
+      "How do I follow job logs in real time?",
+      "Can I see logs after a job has completed?"
+    ],
+    "answer": "Each Job creates one or more pods with names that include the job name and a random suffix. Find the pods with kubectl get pods --show-labels (look for labels like job-name=hello-job) or filter with kubectl get pods -l job-name=<job-name>. Then view the logs with kubectl logs <pod-name>. You can view logs even after the job has completed, which is useful for debugging and auditing. To follow the logs of a running job in real time, use kubectl logs -f <pod-name>, and press Ctrl+C to stop following.",
+    "source": "monitor_job.docx",
+    "topic": "monitoring"
+  },
+  {
+    "id": "k8s-job-failed-019",
+    "question": "How do I debug a Kubernetes Job that failed?",
+    "aliases": [
+      "Why is my Kubernetes job failing?",
+      "What does backoffLimit do?",
+      "How do I find logs of failed job pods?"
+    ],
+    "answer": "In the tutorial's example, a job named failed-job runs a container that prints a message and exits with status code 1, with restartPolicy Never and backoffLimit 2. The job attempts and fails up to the backoff limit. kubectl get jobs failed-job then shows 0/1 completions. Running kubectl get pods -l job-name=failed-job shows several pods, all in the Error state. Choose one and run kubectl logs <failed-pod-name> to see the output, which shows the task started but exited with an error code; this information is crucial for debugging job failures. The backoffLimit sets how many times the job is retried if it fails (for example, backoffLimit: 4 means it retries up to 4 times).",
+    "source": "monitor_job.docx",
+    "topic": "troubleshooting"
+  },
+  {
+    "id": "k8s-job-advanced-monitoring-020",
+    "question": "How can I use labels, events, and JSONPath to monitor Kubernetes Jobs?",
+    "aliases": [
+      "How do I filter jobs by label?",
+      "How do I view events for a job?",
+      "How do I get a job's succeeded count with kubectl?"
+    ],
+    "answer": "Labels are key-value pairs attached to resources that help organize and select subsets of them. After adding labels to a job's metadata you can filter, for example kubectl get jobs -l department=engineering, or use multiple labels such as kubectl get jobs -l department=engineering,environment=training. For events, kubectl get events --sort-by=.metadata.creationTimestamp shows all events in your namespace sorted by time, and kubectl get events --field-selector involvedObject.name=<job-name> filters events for one job; these help you understand when and why jobs were created, started, or encountered issues. JSONPath lets you extract specific fields, for example kubectl get job labeled-job -o jsonpath='{.status.succeeded}' outputs the number of succeeded pods, and kubectl get job labeled-job -o jsonpath='{.metadata.creationTimestamp}' gives the creation time.",
+    "source": "monitor_job.docx",
+    "topic": "monitoring"
+  },
+  {
+    "id": "k8s-work-queue-021",
+    "question": "How do I run parallel processing with a work queue using a Kubernetes Job?",
+    "aliases": [
+      "Kubernetes Job with Redis work queue",
+      "Fine parallel processing in Kubernetes",
+      "How do worker pods pull tasks from a queue?"
+    ],
+    "answer": "In this example you run a Kubernetes Job that runs multiple parallel tasks as worker processes, each running as a separate Pod. As each pod is created, it picks up one unit of work from a task queue, processes it, and repeats until the end of the queue is reached. The steps are: (1) start a storage service to hold the work queue (Redis, started with kubectl apply of redis-pod.yaml and redis-service.yaml); (2) create a queue named job2 and fill it with messages using redis-cli rpush from a temporary interactive pod; (3) create a container image with a Python worker script (worker.py using rediswq) that leases items from the queue, processes them, marks them complete, and exits when the queue is empty, then build and push the image to a registry; (4) define a Job (batch/v1) with parallelism: 2 and restartPolicy: OnFailure; (5) run it with kubectl apply -f ./job.yaml and check with kubectl describe jobs/job-wq-2, kubectl wait --for=condition=complete --timeout=300s job/job-wq-2, and kubectl logs. Each pod works on several items and then exits, and workers signal the queue is empty by exiting with success. If you have a continuous stream of background processing work, consider running your background workers with a ReplicaSet instead.",
+    "source": "parallel_work_queue.txt",
+    "topic": "work-queue"
+  },
+  {
+    "id": "k8s-job-pending-022",
+    "question": "Why is my Kubernetes Job stuck in Pending or my CronJob not creating Jobs?",
+    "aliases": [
+      "Job created but no pods running",
+      "CronJob exists but no jobs created",
+      "How do I troubleshoot CronJob schedule or timezone problems?"
+    ],
+    "answer": "A Job stuck in Pending (job created but no Pods running) has common causes of insufficient cluster resources, node selector constraints, and pod security policies blocking creation. Diagnose with kubectl describe job <job-name>, kubectl get events --sort-by=.metadata.creationTimestamp, kubectl top nodes, and kubectl describe nodes; adding resource requests can help the scheduler. For a CronJob that exists but creates no Jobs, run kubectl describe cronjob <cronjob-name>, verify the schedule syntax, and check the controller manager logs with kubectl logs -n kube-system deployment/kube-controller-manager. Common issues are an invalid cron expression (for example \"60 * * * *\" is invalid because minute must be 0-59; use \"0 * * * *\" instead) and timezone problems (a schedule like \"0 9 * * *\" runs at 9 AM in the cluster timezone; specify timeZone: \"America/New_York\" to run at 9 AM Eastern Time).",
+    "source": "cronjobs.docx",
+    "topic": "troubleshooting"
+  },
+  {
+    "id": "databricks-jobs-tools-023",
+    "question": "What tools can I use to automate job creation and management in Databricks?",
+    "aliases": [
+      "Databricks CLI vs SDK vs REST API",
+      "How do I programmatically manage Databricks jobs?",
+      "What should I use for CI/CD of Databricks jobs?"
+    ],
+    "answer": "There are three developer tools. The Databricks CLI wraps the REST API and is used for one-off tasks such as experimentation, shell scripting, and invoking the REST API directly. The Databricks SDKs (available for Python, Java, Go, or R) let you develop applications and create custom Databricks workflows instead of sending REST API calls directly using curl or Postman. The Databricks REST API can be used directly when the other options don't work for your use case, such as automating processes where an SDK in your preferred programming language is not currently available. Databricks recommends using the CLI and an SDK unless you are using a language without a corresponding SDK. To manage jobs programmatically as part of CI/CD, use Databricks Asset Bundles or the Databricks Terraform provider.",
+    "source": "job_management.html",
+    "topic": "databricks-jobs"
+  },
+  {
+    "id": "databricks-run-job-024",
+    "question": "How can I run a Databricks job from the CLI or SDK?",
+    "aliases": [
+      "Databricks run-now vs submit",
+      "How do I trigger a Databricks job?",
+      "What is the difference between jobs run-now and jobs submit?"
+    ],
+    "answer": "There are three ways to run a job. Scheduled: if the job definition (in JSON) includes a schedule, the job runs automatically on that schedule. Trigger with run-now: the databricks jobs run-now CLI command (or the jobs.run_now API in the SDK) triggers a run for a job that you have already created. Trigger with submit: the databricks jobs submit CLI command (or the jobs.runs.submit API) takes a job definition and triggers a run for the job; with submit, the job is not saved and isn't visible in the UI, it runs once, and when it is done it no longer exists as a job.",
+    "source": "job_management.html",
+    "topic": "databricks-jobs"
+  },
+  {
+    "id": "databricks-create-job-025",
+    "question": "How do I create and manage a Databricks job using the CLI?",
+    "aliases": [
+      "databricks jobs create example",
+      "How do I get a Databricks job's JSON definition?",
+      "How do I delete a Databricks job?"
+    ],
+    "answer": "To create a job, put the job definition in a JSON file (a name plus a tasks list where each task has a task_key and, for example, a notebook_task with a notebook_path and source set to WORKSPACE), then run databricks jobs create --json @<file-path>. You can get the JSON format of any existing job by selecting the View JSON option from the job page UI, or by choosing View as code and then YAML, Python, or JSON. To print information about an individual job, run databricks jobs get <job-id>, which maps to GET /api/2.2/jobs/get. To delete a job, run databricks jobs delete <job-id> or delete it from the workspace UI. Use the -h flag, such as databricks jobs -h, for detailed usage and syntax.",
+    "source": "job_management.html",
+    "topic": "databricks-jobs"
+  }
+]

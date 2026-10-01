@@ -72,6 +72,7 @@ define user ask capabilities
   "what topics do you cover"
   "what can I ask you"
   "what are your capabilities"
+  "how to make coffee"
 
 define bot explain capabilities
   "I'm an Enterprise AI Assistant with deep expertise in: Kubernetes (deployment, scaling, networking, operators), Intel Hardware (CPUs, FPGAs, SRIOV, NICs), Enterprise Networking (SDN, VLANs, BGP, routing). Ask me anything in these areas!"
@@ -102,7 +103,7 @@ YAML_CONTENT = """
 models:
   - type: main
     engine: openai
-    model: gpt-3.5-turbo
+    model: openai/gpt-oss-safeguard-20b
 
 instructions:
   - type: general
@@ -124,4 +125,3 @@ RAIL_INDICATORS = [
     "Goodbye! Feel free to return whenever you have more enterprise IT questions",
     "I'm an Enterprise AI Assistant with deep expertise in",
 ]
-

@@ -15,7 +15,7 @@ class Settings:
 
     # --- REASONING ENGINE (GROQ) ---
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-    GROQ_MODEL = "llama-3.3-70b-versatile"
+    GROQ_MODEL = "openai/gpt-oss-20b"
     GROQ_FALLBACK_API_KEY = os.getenv("GROQ_FALLBACK_API_KEY")
 
     # --- OBSERVABILITY ---
@@ -25,11 +25,10 @@ class Settings:
     LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "rag_scale_test")
     LANGSMITH_ENDPOINT = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
 
-    # --- SEMANTIC CACHE ---
+    # --- STATIC FAQ CACHE ---
     CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
-    CACHE_COLLECTION = os.getenv("CACHE_COLLECTION", "semantic_cache")
-    CACHE_SIMILARITY_THRESHOLD = float(os.getenv("CACHE_SIMILARITY_THRESHOLD", "0.85"))
-    CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "604800"))  # 7 days default
+    CACHE_COLLECTION = os.getenv("CACHE_COLLECTION", "faq_cache")
+    CACHE_SIMILARITY_THRESHOLD = float(os.getenv("CACHE_SIMILARITY_THRESHOLD", "0.88"))
 
 # Apply LangChain environment variables for automatic tracing
 os.environ["LANGCHAIN_TRACING_V2"] = os.getenv("LANGSMITH_TRACING", "true")

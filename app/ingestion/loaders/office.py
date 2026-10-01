@@ -1,4 +1,5 @@
 from unstructured.partition.auto import partition
+import logfire
 
 def parse_office(file_path: str):
     """

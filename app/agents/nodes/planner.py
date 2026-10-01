@@ -2,13 +2,20 @@ import logfire
 from app.agents.state import AgentState
 from langchain_groq import ChatGroq
 from app.config import settings
+from langchain_huggingface import ChatHuggingFace,HuggingFaceEndpoint
+from dotenv import load_dotenv
+import os
+load_dotenv()  # Load environment variables from .env file
 
 # Direct Groq LLM integration
 llm = ChatGroq(
     api_key=settings.GROQ_API_KEY,
-    model="llama-3.1-8b-instant",
+    model="openai/gpt-oss-safeguard-20b",
     temperature=0
 )
+# model=HuggingFaceEndpoint(repo_id='Qwen/Qwen3-4B-Instruct-2507',huggingfacehub_api_token=os.getenv("HF_TOKEN"))
+# llm=ChatHuggingFace(llm=model,temperature=0)
+
 
 def planner_node(state: AgentState):
     """

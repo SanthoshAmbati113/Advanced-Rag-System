@@ -56,14 +56,12 @@ def query(request: QueryRequest):
     
     Flow:
     1. Guardrails check (blocks malicious/off-topic queries)
-    2. Semantic cache lookup (bypasses RAG pipeline on hit)
-    3. LangGraph RAG pipeline (on cache miss)
-    4. Cache storage (after successful RAG generation)
+    2. Static FAQ cache lookup (bypasses RAG pipeline on hit)
+    3. LangGraph RAG pipeline (on cache miss — FAQ collection is never written)
     """
     q = request.q
     thread_id = request.thread_id
     
-    # Get semantic cache instance
     cache = get_cache()
 
     initial_state = {
@@ -90,52 +88,47 @@ def query(request: QueryRequest):
                 "sources": []
             }
 
-        # Gate 2: Semantic Cache — checks for similar cached responses
-        # This runs BEFORE the expensive RAG pipeline to reduce latency and token costs
-        with logfire.span("Cache Check"):
+        # Gate 2: Static FAQ cache — nearest seeded question/alias above threshold
+        with logfire.span("FAQ Cache Check"):
             cache_result = cache.lookup(q)
-            
+
             if cache_result.hit:
-                # Cache hit - return cached answer immediately
+                entry = cache_result.entry
                 logfire.info(
-                    f"💾 Cache hit: similarity={cache_result.similarity_score:.4f}, "
-                    f"latency_saved={cache_result.latency_saved_ms:.0f}ms"
+                    f"💾 FAQ cache hit: id={entry.faq_id if entry else ''} "
+                    f"similarity={cache_result.similarity_score:.4f}"
                 )
+                thought = [
+                    "Intent: FAQ Cache Hit",
+                    f"FAQ: {entry.faq_id if entry else 'unknown'}",
+                    f"Matched: {entry.question if entry else ''}",
+                    f"Similarity: {cache_result.similarity_score:.4f}",
+                ]
+                if entry and entry.source:
+                    thought.append(f"Source: {entry.source}")
                 return {
                     "question": q,
                     "answer": cache_result.answer,
-                    "thought_process": [
-                        "Intent: Cache Hit",
-                        f"Similarity: {cache_result.similarity_score:.4f}",
-                        f"Latency Saved: {cache_result.latency_saved_ms:.0f}ms"
-                    ],
-                    "status": "Answer retrieved from cache.",
-                    "sources": [],
+                    "thought_process": thought,
+                    "status": "Answer retrieved from FAQ cache.",
+                    "sources": [entry.source] if entry and entry.source else [],
                     "cache_metadata": {
+                        "faq_id": entry.faq_id if entry else None,
+                        "matched_question": entry.question if entry else None,
+                        "matched_variant": entry.variant if entry else None,
+                        "topic": entry.topic if entry else None,
+                        "source": entry.source if entry else None,
                         "similarity_score": cache_result.similarity_score,
                         "latency_saved_ms": cache_result.latency_saved_ms,
-                        "model_name": cache_result.entry.model_name if cache_result.entry else None,
-                        "cached_at": cache_result.entry.timestamp.isoformat() if cache_result.entry else None
-                    }
+                    },
                 }
             else:
-                logfire.info("💾 Cache miss - proceeding with RAG pipeline")
+                logfire.info("💾 FAQ cache miss - proceeding with RAG pipeline")
 
-        # Gate 3: LangGraph RAG pipeline (on cache miss)
-        # Run the graph synchronously to preserve Logfire context variables
+        # Gate 3: LangGraph RAG pipeline (on cache miss). FAQ collection stays unchanged.
         final_output = rag_agent.invoke(initial_state, config=config)
-        
+
         final_answer = final_output.get("final_answer")
-        
-        # Store the result in cache for future queries
-        # This happens after successful RAG pipeline execution
-        with logfire.span("Cache Storage"):
-            cache.store(
-                question=q,
-                answer=final_answer,
-                model_name="llama-3.3-70b-versatile",
-                document_version="v1"
-            )
 
         return {
             "question": q,
