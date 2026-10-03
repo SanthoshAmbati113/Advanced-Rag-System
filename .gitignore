@@ -55,3 +55,7 @@ tenvv
 
 # Logs
 *.log
+
+processed_data/
+.deepeval/
+DATA/            # optional — only commit if you need it on the server
