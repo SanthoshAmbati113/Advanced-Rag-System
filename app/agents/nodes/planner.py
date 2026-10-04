@@ -2,7 +2,7 @@ import logfire
 from app.agents.state import AgentState
 from langchain_groq import ChatGroq
 from app.config import settings
-from langchain_huggingface import ChatHuggingFace,HuggingFaceEndpoint
+# from langchain_huggingface import ChatHuggingFace,HuggingFaceEndpoint
 from dotenv import load_dotenv
 import os
 load_dotenv()  # Load environment variables from .env file
