@@ -23,7 +23,8 @@ def retrieve_node(state: AgentState):
         raw_results = search_enterprise_knowledge(
             query,
             limit=15,
-            candidates_per_retriever=20,
+            dense_limit=10,
+            sparse_limit=5,
         )
 
         logfire.info(
