@@ -73,7 +73,8 @@ def reciprocal_rank_fusion(
 def search_enterprise_knowledge(
     query: str,
     limit: int = 15,
-    candidates_per_retriever: int = 20,
+    dense_limit: int = 10,
+    sparse_limit: int = 5,
 ):
     """Retrieve dense and sparse candidates, then fuse with RRF."""
     try:
@@ -84,7 +85,7 @@ def search_enterprise_knowledge(
             collection_name=settings.QDRANT_COLLECTION,
             query=dense_vector,
             using="dense",
-            limit=candidates_per_retriever,
+            limit=dense_limit,
             with_payload=True,
         )
 
@@ -95,7 +96,7 @@ def search_enterprise_knowledge(
             collection_name=settings.QDRANT_COLLECTION,
             query=sparse_vector,
             using="bm25",
-            limit=candidates_per_retriever,
+            limit=sparse_limit,
             with_payload=True,
         )
 

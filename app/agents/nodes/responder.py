@@ -7,7 +7,8 @@ from app.config import settings
 llm = ChatGroq(
     api_key=settings.GROQ_API_KEY,
     model=settings.GROQ_MODEL,
-    temperature=0.1
+    temperature=0.1,
+    max_output_tokens=700,
 )
 
 

@@ -281,7 +281,8 @@ Incorrect:
 
 guard_classifier = ChatGroq(
     api_key=settings.GROQ_API_KEY,
-    model="openai/gpt-oss-safeguard-20b",
+    model="openai/gpt-oss-20b",
+    reasoning_effort='low',
     temperature=0,
 )
 
